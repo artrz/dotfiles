@@ -1,0 +1,36 @@
+#!/bin/sh
+
+########################################## Environment
+
+# GIT
+export GIT_EDITOR=vim
+
+# Node
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+
+
+########################################## Helpers
+
+# PHP
+alias pt="vendor/bin/phpunit -d memory_limit=512M"
+
+# Server
+alias west="service postgresql status ; service php7.0-fpm status ; service nginx status"
+alias weup="sudo service postgresql start ; sudo service php7.0-fpm start ; sudo service nginx start ; west"
+alias wedo="sudo service postgresql stop  ; sudo service php7.0-fpm stop  ; sudo service nginx stop  ; west"
+
+# Postgres
+pgs() {
+    if [ "$#" -eq 0 ] ; then
+        echo "Usage: pgs user [database]"
+    elif [ "$#" -eq 1 ] ; then
+        eval "psql -h localhost -p 5432 -U $1"
+    elif [ "$#" -ge 2 ] ; then
+        eval "psql -h localhost -p 5432 -U $1 -d $2"
+    fi
+}
+
+# Laravel
+alias art="php artisan"
+alias tin="art tinker"

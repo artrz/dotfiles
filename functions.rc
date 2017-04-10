@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Performs a grepp in multiple directories
+# $ dgrep term dir1/ dir2/ ...
+dgrep() {
+    term=$1
+    shift
+    for var in "$@"
+    do
+        grepp $term "$var"
+    done
+}
+
+# Search for filenames containing the string
+# $ nfind substring
+ngrep() {
+    if [ "$#" -lt 2 ] ; then
+        echo "Usage: ngrep term base_directory"
+    else
+	    find "$2" -regex ".*$1.*" | grep $1
+    fi
+}

@@ -1,0 +1,41 @@
+#!/bin/sh
+
+########################################## Helpers
+
+# Edits and reloads an .rc file
+rc.edit() {
+    if [ -f ~/.dotfiles/$1 ]; then
+        vim ~/.dotfiles/$1
+        . ~/.dotfiles/$1
+        echo "Updated rc: "$1
+    else
+        echo "Unknown rc: "$1
+    fi
+}
+
+# Adds a directory to the $PATH environment variable
+rc.export() {
+    # expand a possible ~
+    path=$(echo $1)
+    if ! echo "$PATH" | grep -q "$path"; then
+        export PATH="$path":"$PATH"
+    fi
+}
+
+########################################## Booting files
+
+printf "booting dotfiles"
+_my_dotfiles=(os.rc aliases.rc functions.rc dev.rc ps1.rc)
+
+for _my_dotfile in ${_my_dotfiles[@]}; do
+    if [ -f ~/.dotfiles/$_my_dotfile ]; then
+        . ~/.dotfiles/$_my_dotfile
+        printf "."
+    fi
+done
+
+printf " DONE\n"
+
+sleep 0.3
+
+clx

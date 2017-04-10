@@ -1,0 +1,122 @@
+#!/bin/sh
+
+
+########## Color definitions
+
+# Color start and end sequences
+if [ -n "$BASH_VERSION" ]; then
+   _CS='\[\033['
+   _CE='\]'
+elif [ -n "$ZSH_VERSION" ]; then
+   _CS='\033['
+   _CE=''
+fi
+
+# Low intensity                   High intensity                    Low intensity Bold                 High intensity Bold
+COL_L_Black="${_CS}0;30m${_CE}";  COL_H_Black="${_CS}0;90m${_CE}";  COL_LB_Black="${_CS}1;30m${_CE}";  COL_HB_Black="${_CS}1;90m${_CE}";
+COL_L_Red="${_CS}0;31m${_CE}";    COL_H_Red="${_CS}0;91m${_CE}";    COL_LB_Red="${_CS}1;31m${_CE}";    COL_HB_Red="${_CS}1;91m${_CE}";
+COL_L_Green="${_CS}0;32m${_CE}";  COL_H_Green="${_CS}0;92m${_CE}";  COL_LB_Green="${_CS}1;32m${_CE}";  COL_HB_Green="${_CS}1;92m${_CE}";
+COL_L_Yellow="${_CS}0;33m${_CE}"; COL_H_Yellow="${_CS}0;93m${_CE}"; COL_LB_Yellow="${_CS}1;33m${_CE}"; COL_HB_Yellow="${_CS}1;93m${_CE}";
+COL_L_Blue="${_CS}0;34m${_CE}";   COL_H_Blue="${_CS}0;94m${_CE}";   COL_LB_Blue="${_CS}1;34m${_CE}";   COL_HB_Blue="${_CS}1;94m${_CE}";
+COL_L_Purple="${_CS}0;35m${_CE}"; COL_H_Purple="${_CS}0;95m${_CE}"; COL_LB_Purple="${_CS}1;35m${_CE}"; COL_HB_Purple="${_CS}1;95m${_CE}";
+COL_L_Cyan="${_CS}0;36m${_CE}";   COL_H_Cyan="${_CS}0;96m${_CE}";   COL_LB_Cyan="${_CS}1;36m${_CE}";   COL_HB_Cyan="${_CS}1;96m${_CE}";
+COL_L_White="${_CS}0;37m${_CE}";  COL_H_White="${_CS}0;97m${_CE}";  COL_LB_White="${_CS}1;37m${_CE}";  COL_HB_White="${_CS}1;97m${_CE}";
+
+# Color reset
+COL_RS="${_CS}0m${_CE}"
+
+
+########## General symbols
+
+PRT_end='❱'
+
+
+########## Git symbols
+
+GIT_sign='⎇ '
+GIT_ok='✔'
+GIT_dirty='●'
+GIT_changes='➕'
+GIT_new='✦'
+GIT_deleted='☗'
+GIT_stash='◒'
+GIT_no='⬠'
+
+
+########## Prompt builder
+
+__build_ps1() {
+
+    ### Git info
+
+    git_status=''
+    git_branch=$(git symbolic-ref HEAD 2> /dev/null | sed -e 's,.*/\(.*\),\1,')
+
+    if [[ -n $git_branch ]]; then
+
+        local upstream=$(git rev-parse --symbolic-full-name --abbrev-ref @{upstream} 2> /dev/null)
+        if [[ -n "${upstream}" && "${upstream}" != "@{upstream}" ]]; then
+            git_status="${COL_H_Green}${GIT_sign}${COL_RS}"
+        else
+            git_status="${COL_H_Red}${GIT_sign}${COL_RS}"
+        fi
+
+        git_status="${git_status} "
+
+        local git_status_data="$(git status --porcelain 2> /dev/null)"
+        if [[ -n $git_status_data ]]; then
+
+            # able to commit
+            if [[ $git_status_data =~ ($'\n'|^)[MAD] && ! $git_status =~ ($'\n'|^).[MAD\?] ]]; then
+                git_status="${git_status}${COL_HB_Blue}${git_branch}${COL_RS} "
+            # nothing to commig
+            else
+                git_status="${git_status}${COL_H_Blue}${git_branch}${COL_RS} "
+            fi
+            # local modifications
+            if [[ $git_status_data =~ ($'\n'|^).M ]]; then
+                git_status="${git_status}${COL_L_Red}${GIT_dirty}${COL_RS}"
+            fi
+            # cached modifications
+            if [[ $git_status_data =~ ($'\n'|^)M ]]; then
+                git_status="${git_status}${COL_L_White}${GIT_changes}${COL_RS}"
+            fi
+            # local additions
+            if [[ $git_status_data =~ ($'\n'|^)\\?\\? ]]; then
+                git_status="${git_status}${COL_L_Yellow}${GIT_new}${COL_RS}"
+            fi
+            # cached additions
+            if [[ $git_status_data =~ ($'\n'|^)A ]]; then
+                git_status="${git_status}${COL_L_White}${GIT_new}${COL_RS}"
+            fi
+            # local deletions
+            if [[ $git_status_data =~ ($'\n'|^).D ]]; then
+                git_status="${git_status}${COL_L_Yellow}${GIT_deleted}${COL_RS}"
+            fi
+            # cached deletions
+            if [[ $git_status_data =~ ($'\n'|^)D ]]; then
+                git_status="${git_status}${COL_L_Purple}${GIT_deleted}${COL_RS}"
+            fi
+        else
+            git_status="${git_status}${COL_H_Black}${git_branch}${COL_RS} ${COL_H_Green}${GIT_ok}${COL_RS}"
+        fi
+    else
+        git_status="${COL_LB_Purple}${GIT_no}${COL_RS}"
+    fi
+
+    ### build prompt
+
+    if [ -n "$BASH_VERSION" ]; then
+        PS1="${COL_L_Green}\t${COL_RS} ${COL_HB_Blue}\w${COL_RS} ${git_status} ${PRT_end} "
+    elif [ -n "$ZSH_VERSION" ]; then
+        PS1=$(echo -e "${COL_L_Green}%*${COL_RS} ${COL_HB_Blue}%/${COL_RS} ${git_status} ${PRT_end} ")
+    fi
+}
+
+# Run it
+
+if [ -n "$BASH_VERSION" ]; then
+   PROMPT_COMMAND=__build_ps1
+elif [ -n "$ZSH_VERSION" ]; then
+    precmd_functions+=(__build_ps1)
+fi

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias .....='cd ../../../..'
+alias ......='cd ../../../../..'
+
+# Recursive term search
+alias grepp='grep -rn'
+
+# Clears terminal buffer
+alias clx='echo -e "\0033\0143"'
